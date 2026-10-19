@@ -15,7 +15,7 @@ jobs:
           - { name: backend, context: ./backend }
           - { name: frontend, context: ./frontend }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: meta
         run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.name }}" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
