@@ -1,4 +1,4 @@
-# EcoPulse AI - Phase 1
+# EcoPulse AI - Urban Climate Intelligence & Decision Engine
 
 Containerized infrastructure + TimescaleDB/Pgvector schema.
 
