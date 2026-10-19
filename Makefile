@@ -1,4 +1,7 @@
-.PHONY: up down logs bootstrap test ps psql
+# Optional stacks
+observability: ; docker compose --profile observability up -d prometheus grafana
+mcp:           ; docker compose --profile mcp up -d --build mcp-server
+.PHONY: observability mcp up down logs bootstrap test ps psql
 up:        ; docker compose up --build -d
 down:      ; docker compose down
 logs:      ; docker compose logs -f --tail=100

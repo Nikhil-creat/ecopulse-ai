@@ -22,3 +22,5 @@ sentence-transformers>=3.0
 pypdf>=4.0
 reportlab>=4.2
 statsmodels>=0.14
+prometheus-fastapi-instrumentator>=7.0
+mcp>=1.9

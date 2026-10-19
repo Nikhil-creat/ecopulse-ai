@@ -2,4 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-slate-950 text-slate-100 antialiased; }
+body {
+  @apply text-slate-100 antialiased;
+  background:
+    radial-gradient(1100px 560px at 8% -12%, rgba(0, 229, 255, 0.14), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(124, 58, 237, 0.16), transparent 55%),
+    #050a14;
+  background-attachment: fixed;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+@layer components {
+  .glass {
+    @apply rounded-2xl border border-cyan-400/15 bg-slate-900/50 backdrop-blur-md;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset, 0 10px 44px -14px rgba(0, 229, 255, 0.2);
+  }
+  .glass-sm {
+    @apply rounded-xl border border-cyan-400/15 bg-slate-900/50 backdrop-blur-md;
+  }
+  .neon {
+    @apply bg-gradient-to-r from-cyan-300 via-emerald-300 to-violet-300 bg-clip-text text-transparent;
+  }
+}

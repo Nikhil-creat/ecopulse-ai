@@ -142,6 +142,45 @@ services:
       retries: 5
     networks: [app-net]
 
+  mcp-server:   # Model Context Protocol server: lets any MCP client (Claude, IDE agents) query EcoPulse. Start: make mcp
+    build:
+      context: ./backend
+    profiles: ["mcp"]
+    container_name: ecopulse-mcp
+    restart: unless-stopped
+    environment: *backend-env
+    command: ["python", "-m", "app.mcp_server"]
+    ports:
+      - "127.0.0.1:8765:8765"   # localhost only: no auth yet
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    depends_on:
+      postgres-timescaledb-vector:
+        condition: service_healthy
+    networks: [data-net]
+
+  prometheus:   # Start: make observability
+    image: prom/prometheus:v2.55.0
+    profiles: ["observability"]
+    restart: unless-stopped
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks: [app-net]
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    profiles: ["observability"]
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-change-me-now}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks: [app-net]
+
 networks:
   data-net:
   app-net:

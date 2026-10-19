@@ -47,7 +47,7 @@ export default function TrendChart({ stationId }: { stationId: string | null }) 
   }, [series, fc]);
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+    <div className="glass p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold">History &amp; forecast</p>
         <div className="flex gap-1">

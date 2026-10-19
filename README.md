@@ -8,6 +8,9 @@
 - 🔗 LinkedIn: [nikhil-chary-sriramoju](https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a)
 - 💻 GitHub: [Nikhil-creat](https://github.com/Nikhil-creat)
 - 📧 Email: sriramojunikhil66@gmail.com
+- 🎓 B.Tech CSE, Vaagdevi College of Engineering (2023–2027)
+- 💼 Machine Learning Engineer Intern, Yuva Intern (NSDC), Aug–Sep 2026 · Data Analytics Intern, Thiranex, Jul–Aug 2026
+- 📜 NASSCOM / Skill India Digital Hub: AI-Data Engineering & Cloud Infrastructure Analyst · IBM SkillsBuild: AI Fundamentals · Reliance Foundation: AI/ML Engineer Foundation
 
 ## ✨ Features
 - **Multi-pollutant forecasting**: PM2.5, PM10, NO₂, AQI and temperature at +6/12/24/48/72 h. Holt-Winters, damped-trend and seasonal-naive models are compared on a 24 h hold-out; the best is used. Retrained every 3 hours and when drift is detected.
@@ -16,6 +19,8 @@
 - **Hybrid RAG chatbot**: pgvector + full-text search fused with reciprocal-rank fusion over WHO / CPCB guidelines, combined with live sensor and forecast context, streamed over SSE with session memory.
 - **MLOps drift monitor**: KS-test and Wasserstein distance against a reference window, triggering retraining.
 - **Live dashboard**: Next.js, Tailwind, Recharts, deck.gl 3D map, WebSocket live metrics, one-click Executive Health & Policy Report (PDF).
+- **Observability**: Prometheus metrics and a provisioned Grafana dashboard (`make observability`), plus a live system-status panel in the UI.
+- **MCP server**: exposes air quality, forecasts, risk assessment and guideline search as tools to any Model Context Protocol client (`make mcp`).
 - **Security basics**: API-key protection on write/admin endpoints, per-IP rate limits.
 
 ## 🏗️ Architecture
@@ -29,8 +34,11 @@ Browser ─▶ Nginx ─┬─▶ Next.js dashboard
                   └─▶ WebSocket /ws/live-metrics, SSE /api/v1/chat
 ```
 
+## 🌐 Why it matters
+Supports UN Sustainable Development Goals 3 (health), 11 (sustainable cities) and 13 (climate action) by turning raw sensor feeds into forecasts and actionable, source-cited guidance.
+
 ## 🧰 Tech Stack
-FastAPI · Python 3.11 · SQLAlchemy 2 · TimescaleDB · pgvector · Celery · Redis · PyTorch · statsmodels · LangChain / LangGraph · Groq · Gemini · sentence-transformers (all-MiniLM-L6-v2) · Next.js 14 · Tailwind · Recharts · deck.gl · ReportLab · Docker Compose · Nginx · GitHub Actions
+FastAPI · Python 3.11 · SQLAlchemy 2 · TimescaleDB · pgvector · Celery · Redis · PyTorch · statsmodels · LangChain / LangGraph · Groq · Gemini · sentence-transformers (all-MiniLM-L6-v2) · Next.js 14 · Tailwind · Recharts · deck.gl · ReportLab · Docker Compose · Nginx · GitHub Actions · Prometheus · Grafana · Model Context Protocol
 
 ## 🚀 Getting Started
 Requires Docker + Docker Compose (a Linux VM or GitHub Codespaces works).

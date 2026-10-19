@@ -34,7 +34,7 @@ export default function SpatialMap({ city, readings, onSelect }: { city: string;
   };
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+    <div className="glass p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold">3D spatial view</p>
         <div className="flex items-center gap-2 text-xs">

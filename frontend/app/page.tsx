@@ -4,6 +4,7 @@ import AqiGauge from "@/components/AqiGauge";
 import ChatDrawer from "@/components/ChatDrawer";
 import PollutantGrid from "@/components/PollutantGrid";
 import ReportButton from "@/components/ReportButton";
+import SystemStatus from "@/components/SystemStatus";
 import SpatialMap from "@/components/SpatialMap";
 import TrendChart from "@/components/TrendChart";
 import { Reading, getJSON } from "@/lib/api";
@@ -41,7 +42,7 @@ export default function Dashboard() {
     <main className="mx-auto max-w-7xl space-y-4 p-4 md:p-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-emerald-400">EcoPulse AI</h1>
+          <h1 className="neon text-3xl font-extrabold tracking-tight">EcoPulse AI</h1>
           <p className="text-xs text-slate-500">Autonomous Urban Climate Intelligence &amp; Decision Engine</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -57,6 +58,8 @@ export default function Dashboard() {
           {city && <ReportButton city={city} />}
         </div>
       </header>
+
+      <SystemStatus />
 
       {loadErr && <p className="rounded-lg bg-red-950 p-3 text-sm text-red-300">Could not reach the API. Is the stack running?</p>}
       {!city && !loadErr && (

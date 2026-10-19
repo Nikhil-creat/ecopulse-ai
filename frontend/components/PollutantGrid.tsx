@@ -18,7 +18,7 @@ export default function PollutantGrid({ reading }: { reading: Reading | null }) 
         const who = WHO_24H[key as string];
         const ratio = v != null && who ? v / who : null;
         return (
-          <div key={key} className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+          <div key={key} className="glass-sm p-3">
             <p className="text-xs text-slate-400">{label}</p>
             <p className="text-2xl font-semibold">
               {v != null ? v.toFixed(v >= 100 ? 0 : 1) : "--"}

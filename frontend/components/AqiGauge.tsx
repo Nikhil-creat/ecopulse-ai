@@ -16,7 +16,7 @@ export default function AqiGauge({ aqi, label }: { aqi: number | null; label?: s
   const band = aqiBand(aqi);
   const [nx, ny] = pt(aqi ?? 0, R - 18);
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+    <div className="glass p-4">
       <p className="text-xs uppercase tracking-wider text-slate-400">{label ?? "Air Quality Index"}</p>
       <svg viewBox="0 0 240 140" className="mx-auto w-full max-w-xs">
         {AQI_BANDS.map((b, i) => (
