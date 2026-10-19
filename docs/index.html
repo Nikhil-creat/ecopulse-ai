@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EcoPulse AI – Urban Climate Intelligence</title>
+<meta name="description" content="Open-source platform that forecasts urban air quality, analyses satellite imagery with a CNN and advises with a RAG health assistant.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef3f4;--ink:#10232b;--mute:#496069;--line:#c9d6da;--teal:#0e6f68;
+--good:#00b050;--sat:#92d050;--mod:#f5d300;--poor:#ff9900;--vp:#e53935;--sev:#8b0000}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1.05rem/1.6 "Instrument Sans",system-ui,sans-serif}
+a{color:var(--teal)}
+a:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.wrap{max-width:68rem;margin:0 auto;padding:0 1.25rem}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.05;margin:0}
+h1{font-size:clamp(2.6rem,8vw,5.6rem);font-weight:800;letter-spacing:-.03em;max-width:14ch}
+h2{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:700;letter-spacing:-.02em}
+header.hero{padding:3.5rem 0 2.5rem}
+.lede{max-width:40rem;font-size:1.2rem;color:var(--mute);margin:1.4rem 0 1.8rem}
+.btns{display:flex;flex-wrap:wrap;gap:.75rem}
+.btn{display:inline-block;padding:.8rem 1.2rem;border-radius:.4rem;font-weight:600;text-decoration:none;border:2px solid var(--ink);color:var(--ink)}
+.btn.fill{background:var(--ink);color:#fff}
+.scale{margin-top:3rem}
+.bar{position:relative;display:grid;grid-template-columns:repeat(6,1fr);height:3.4rem;border-radius:.3rem;overflow:hidden}
+.bar span{display:flex;align-items:flex-end;padding:.35rem .5rem;font-size:.78rem;font-weight:600;color:#10232b}
+.bar span:nth-child(5),.bar span:nth-child(6){color:#fff}
+.pin{position:absolute;top:-.9rem;bottom:-.9rem;width:4px;background:var(--ink);left:0;border-radius:2px;animation:slide 1.4s .3s cubic-bezier(.2,.8,.2,1) forwards}
+.pin::after{content:"AQI 218";position:absolute;top:-1.5rem;left:50%;transform:translateX(-50%);font:700 .8rem "Bricolage Grotesque",sans-serif;white-space:nowrap}
+@keyframes slide{to{left:58%}}
+@media (prefers-reduced-motion:reduce){.pin{animation:none;left:58%}}
+.note{font-size:.85rem;color:var(--mute);margin:1.1rem 0 0}
+section{padding:3rem 0;border-top:1px solid var(--line)}
+.rows{margin:1.5rem 0 0;padding:0;list-style:none}
+.rows li{display:grid;grid-template-columns:minmax(0,14rem) 1fr;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--line)}
+.rows b{font-family:"Bricolage Grotesque",sans-serif;font-size:1.15rem}
+.flow{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.5rem 0 0;padding:0;list-style:none;counter-reset:s}
+.flow li{counter-increment:s;padding:.7rem 1rem;border:2px solid var(--ink);border-radius:.4rem;font-weight:600}
+.flow li::before{content:counter(s) ". ";color:var(--teal)}
+pre{background:var(--ink);color:#e6f0f2;padding:1.1rem;border-radius:.4rem;overflow-x:auto;font-size:.9rem;line-height:1.55}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.2rem}
+.chips span{padding:.3rem .7rem;border:1px solid var(--line);border-radius:99px;background:#fff;font-size:.9rem}
+footer{padding:2.5rem 0 4rem;border-top:1px solid var(--line);color:var(--mute)}
+@media(max-width:40rem){.rows li{grid-template-columns:1fr;gap:.2rem}.bar span{font-size:.6rem;padding:.25rem}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>Know the air before you step into it.</h1>
+  <p class="lede">EcoPulse AI forecasts urban air quality up to 72 hours ahead, reads satellite imagery with a CNN, and explains what it means for your health and for city policy.</p>
+  <div class="btns">
+    <a class="btn fill" href="https://github.com/Nikhil-creat/ecopulse-ai">View the code on GitHub</a>
+    <a class="btn" href="#run">Run it yourself</a>
+  </div>
+  <div class="scale" role="img" aria-label="India national AQI scale from Good to Severe with a sample marker at 218, Poor">
+    <div class="bar">
+      <span style="background:var(--good)">Good 0–50</span><span style="background:var(--sat)">Satisfactory</span>
+      <span style="background:var(--mod)">Moderate</span><span style="background:var(--poor)">Poor</span>
+      <span style="background:var(--vp)">Very Poor</span><span style="background:var(--sev)">Severe 400+</span>
+      <i class="pin"></i>
+    </div>
+    <p class="note">The CPCB scale the dashboard uses. The marker is an illustration, not live data.</p>
+  </div>
+</div></header>
+
+<main>
+<section><div class="wrap">
+  <h2>What it does</h2>
+  <ul class="rows">
+    <li><b>Forecasts pollution</b><span>PM2.5, PM10, NO₂, AQI and temperature at +6 to +72 hours. Three models compete on a 24-hour hold-out and the best one is used. Retraining runs every 3 hours and whenever data drift is detected.</span></li>
+    <li><b>Reads the city from above</b><span>A PyTorch CNN scores smog and green cover in satellite or aerial images and draws them as a 3D heatmap.</span></li>
+    <li><b>Checks its own data</b><span>An integrity agent flags stale, flat-lined or implausible sensors before any advice is produced.</span></li>
+    <li><b>Assesses risk and suggests action</b><span>Agents compare readings with WHO and CPCB limits, rate the risk, and propose graded measures for traffic, industry and construction. A person must approve every measure.</span></li>
+    <li><b>Answers health questions</b><span>A streaming chatbot combines guideline search with live readings and the forecast, and cites its sources.</span></li>
+    <li><b>Produces a report</b><span>One click exports an Executive Health &amp; Policy Report as a PDF.</span></li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2>How a reading becomes advice</h2>
+  <ol class="flow">
+    <li>Ingest sensors</li><li>Validate &amp; store</li><li>Forecast</li><li>Agents assess risk</li><li>Dashboard, chat &amp; PDF</li>
+  </ol>
+  <div class="chips">
+    <span>FastAPI</span><span>TimescaleDB</span><span>pgvector</span><span>Celery + Redis</span><span>PyTorch</span><span>statsmodels</span>
+    <span>LangGraph</span><span>Groq · Gemini</span><span>Next.js</span><span>deck.gl</span><span>Docker Compose</span><span>Nginx</span>
+  </div>
+</div></section>
+
+<section id="run"><div class="wrap">
+  <h2>Run it yourself</h2>
+  <p>This page is a showcase. The platform itself needs Docker (a Linux machine or GitHub Codespaces works).</p>
+<pre>git clone https://github.com/Nikhil-creat/ecopulse-ai
+cd ecopulse-ai
+cp .env.example .env     # set POSTGRES_PASSWORD, SECRET_KEY, API_KEYS
+make up
+./scripts/bootstrap.sh http://localhost YOUR_API_KEY</pre>
+  <p class="note">Without API keys it uses clearly labelled simulated data. The CNN uses heuristic scoring until trained on real imagery. Output is decision support, not medical advice.</p>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  Built by <b>Nikhil Chary Sriramoju</b>, B.Tech CSE final year.
+  <a href="https://github.com/Nikhil-creat">GitHub</a> ·
+  <a href="https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a">LinkedIn</a>
+</div></footer>
+</body>
+</html>
