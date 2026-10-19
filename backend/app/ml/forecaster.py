@@ -80,3 +80,49 @@ def bounds(res: ForecastResult, horizon: int, z: float = 1.28) -> tuple[float, f
     pred = float(res.preds[horizon - 1])
     band = z * res.resid_std * np.sqrt(1 + horizon / 24)
     return pred, max(0.0, pred - band), pred + band
+
+
+# ----------------------------------------------------------------------------- v4: backtest + explain
+def fit_predict(name: str, y: np.ndarray, steps: int) -> np.ndarray:
+    return np.tile(y[-1], steps) if name == "persistence" else _fit_predict(name, y, steps)
+
+
+def backtest_series(series: pd.Series, horizon: int = 24, origins: int = 14, step: int = 12) -> dict[str, list[tuple[float, float]]]:
+    """Rolling-origin evaluation: returns {model: [(MAE, RMSE) per origin]} on the last `origins*step` hours."""
+    y = series.to_numpy(dtype=float)
+    out: dict[str, list[tuple[float, float]]] = {}
+    for k in range(origins):
+        cut = len(y) - horizon - k * step
+        if cut < 24:
+            break
+        train, actual = y[:cut], y[cut : cut + horizon]
+        names = ["persistence", "damped-trend"] + (["seasonal-naive"] if cut >= 48 else []) + (["holt-winters-24"] if cut >= 72 else [])
+        for name in names:
+            try:
+                err = fit_predict(name, train, horizon) - actual
+                out.setdefault(name, []).append((float(np.mean(np.abs(err))), float(np.sqrt(np.mean(err**2)))))
+            except Exception:  # noqa: BLE001
+                continue
+    return out
+
+
+def explain(series: pd.Series, horizon: int = 24) -> dict | None:
+    """Additive decomposition of the Holt-Winters forecast into level + damped trend + daily cycle."""
+    y = series.to_numpy(dtype=float)
+    if len(y) < 72:
+        return None
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        res = ExponentialSmoothing(y, trend="add", damped_trend=True, seasonal="add", seasonal_periods=24,
+                                   initialization_method="estimated").fit()
+    phi = float(res.params.get("damping_trend", 1.0))
+    level = float(res.level[-1])
+    trend = float(res.trend[-1]) * phi * (1 - phi**horizon) / (1 - phi) if phi != 1 else float(res.trend[-1]) * horizon
+    cycle = float(res.season[-24 + (horizon - 1) % 24])
+    total = level + trend + cycle
+    return {"horizon_hours": horizon, "forecast": round(total, 2),
+            "components": {"baseline_level": round(level, 2), "trend": round(trend, 2), "daily_cycle": round(cycle, 2)},
+            "text": (f"Forecast {total:.0f} = recent baseline {level:.0f} "
+                     f"{'+' if trend >= 0 else '-'} trend {abs(trend):.1f} "
+                     f"{'+' if cycle >= 0 else '-'} daily-cycle effect {abs(cycle):.1f} "
+                     f"({'this hour is typically above' if cycle >= 0 else 'this hour is typically below'} the daily average)")}

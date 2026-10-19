@@ -1,4 +1,5 @@
 import asyncio
+from collections import Counter
 import logging
 from datetime import datetime, timedelta, timezone
 
@@ -7,6 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ml.forecaster import REPORT_HORIZONS, bounds, forecast_series, regularise
+from app.ml.tracking import tracked_run
 from app.models import AuditLog, Forecast, SensorReading
 
 log = logging.getLogger(__name__)
@@ -22,6 +24,8 @@ async def train_and_forecast(session: AsyncSession) -> dict:
         select(SensorReading.station_id).where(SensorReading.time >= since).distinct())).scalars().all()
     bucket = func.time_bucket(literal_column("interval '1 hour'"), SensorReading.time).label("b")
     written, skipped = 0, 0
+    chosen: Counter[str] = Counter()
+    maes: list[float] = []
     for sid in stations:
         for pol in POLLUTANTS:
             col = getattr(SensorReading, pol)
@@ -37,6 +41,9 @@ async def train_and_forecast(session: AsyncSession) -> dict:
             if res is None:
                 skipped += 1
                 continue
+            chosen[res.model] += 1
+            if res.holdout_mae is not None:
+                maes.append(res.holdout_mae)
             vals = []
             for h in REPORT_HORIZONS:
                 pred, lo, hi = bounds(res, h)
@@ -53,6 +60,10 @@ async def train_and_forecast(session: AsyncSession) -> dict:
                                                     "upper_bound", "confidence_level", "meta")})
             await session.execute(stmt)
             written += len(vals)
+    with tracked_run("forecast-training", f"train-{issued:%Y%m%d%H}") as t:
+        t.params({"stations": len(stations), **{f"chosen_{k}": v for k, v in chosen.items()}})
+        t.metrics({"series_forecast": sum(chosen.values()), "series_skipped": skipped,
+                   "mean_holdout_mae": sum(maes) / len(maes) if maes else 0.0})
     session.add(AuditLog(actor="forecaster", actor_type="system", action="train_forecasts",
                          details={"stations": len(stations), "rows": written, "skipped_series": skipped}))
     await session.commit()

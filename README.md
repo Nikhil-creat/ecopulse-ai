@@ -22,6 +22,7 @@
 - **Observability**: Prometheus metrics and a provisioned Grafana dashboard (`make observability`), plus a live system-status panel in the UI.
 - **MCP server**: exposes air quality, forecasts, risk assessment and guideline search as tools to any Model Context Protocol client (`make mcp`).
 - **Accounts & alerts (v3)**: JWT sessions in httpOnly cookies, scrypt password hashing, viewer / analyst / admin roles, login rate limiting, audit logging, and per-user threshold alerts that fire on fresh data.
+- **Model intelligence (v4)**: rolling-origin forecast back-testing with skill vs persistence, decomposition-based explanations of each forecast, Isolation Forest anomaly detection with per-hour driver feature, and optional MLflow experiment tracking (`make mlflow`).
 - **Security basics**: API-key protection on write/admin endpoints, per-IP rate limits.
 
 ## 🏗️ Architecture
@@ -72,5 +73,4 @@ See [`docs/DEPLOY.md`](docs/DEPLOY.md) for the deployment checklist.
 - No user accounts yet; dashboard reads are public.
 
 ## Roadmap
-- **v4 Intelligence**: MLflow experiment tracking and model registry, forecast back-testing with explainability, anomaly detection.
 - **v5 Scale**: Redpanda/Kafka streaming ingestion, Kubernetes (Helm) manifests, k6 load tests, container scanning in CI.

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import AqiGauge from "@/components/AqiGauge";
+import Link from "next/link";
 import AlertsPanel from "@/components/AlertsPanel";
 import AuthBar from "@/components/AuthBar";
 import ChatDrawer from "@/components/ChatDrawer";
@@ -57,6 +58,7 @@ export default function Dashboard() {
             <span className={`h-2.5 w-2.5 rounded-full ${STATUS_STYLE[status]}`} />
             {status}{asOf ? ` · ${asOf.toLocaleTimeString()}` : ""}
           </span>
+          <Link href="/intelligence" className="glass-sm px-3 py-1.5 text-xs">Model intelligence</Link>
           <AuthBar />
           {city && <ReportButton city={city} />}
         </div>

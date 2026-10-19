@@ -22,6 +22,9 @@ x-backend-env: &backend-env
   AUTH_REQUIRED: ${AUTH_REQUIRED:-false}
   ADMIN_EMAIL: ${ADMIN_EMAIL:-}
   ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+  MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
+  MLFLOW_HTTP_REQUEST_MAX_RETRIES: "1"
+  MLFLOW_HTTP_REQUEST_TIMEOUT: "5"
   ARTIFACTS_DIR: /app/artifacts
 
 services:
@@ -184,6 +187,21 @@ services:
       - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks: [app-net]
 
+  mlflow:   # experiment tracking UI. Start: make mlflow, then set MLFLOW_TRACKING_URI=http://mlflow:5000 in .env and restart
+    image: ghcr.io/mlflow/mlflow:v2.17.2
+    profiles: ["mlops"]
+    restart: unless-stopped
+    command: >
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --serve-artifacts --artifacts-destination /mlflow/artifacts
+      --default-artifact-root mlflow-artifacts:/
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    networks: [data-net, app-net]
+
 networks:
   data-net:
   app-net:
@@ -193,3 +211,4 @@ volumes:
   redisdata:
   ml-artifacts:
   hf-cache:
+  mlflow-data:

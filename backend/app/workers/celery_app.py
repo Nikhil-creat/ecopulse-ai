@@ -19,6 +19,7 @@ celery.conf.update(
         "fetch-sensor-data": {"task": "app.workers.tasks.fetch_sensor_data",
                               "schedule": float(settings.ingest_interval_seconds)},
         "train-forecasts": {"task": "app.workers.tasks.train_forecasts", "schedule": crontab(minute=20, hour="*/3")},
+        "backtest-daily": {"task": "app.workers.tasks.run_backtest_task", "schedule": crontab(hour=3, minute=30)},
         "drift-monitor": {"task": "app.workers.tasks.drift_monitor", "schedule": crontab(minute=5)},
     },
 )

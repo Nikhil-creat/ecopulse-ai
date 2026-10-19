@@ -13,6 +13,7 @@ import torch.nn.functional as F
 from PIL import Image
 
 from app.core.config import get_settings
+from app.ml.tracking import tracked_run
 from app.ml.spatial_cnn import INPUT_SIZE, SpatialCNN, heuristic_maps, load_image_tensor
 
 
@@ -53,6 +54,10 @@ def main() -> None:
     out_path = Path(get_settings().artifacts_dir) / "models"
     out_path.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), out_path / "spatial_cnn.pt")
+    with tracked_run("spatial-cnn", "bootstrap-distillation") as t:
+        t.params({"epochs": args.epochs, "batch": args.batch, "lr": args.lr, "images": n, "labels": "heuristic pseudo-labels"})
+        t.metrics({"final_loss": total / n})
+        t.artifact(str(out_path / "spatial_cnn.pt"))
     print(f"saved {out_path / 'spatial_cnn.pt'}")
 
 

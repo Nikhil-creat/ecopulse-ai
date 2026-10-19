@@ -103,3 +103,15 @@ def retrain_models(reason: str, report_generated_at: str | None = None) -> dict[
     """Triggered by the drift monitor: refit every forecaster on fresh data."""
     log.warning("retrain requested (reason=%s, report=%s)", reason, report_generated_at)
     return train_forecasts()
+
+
+@celery.task(name="app.workers.tasks.run_backtest_task")
+def run_backtest_task() -> dict[str, Any]:
+    from app.services.intel import run_backtest
+
+    async def _run() -> dict[str, Any]:
+        async with worker_session() as session:
+            return await run_backtest(session)
+
+    report = run_async(_run())
+    return {p: i["best"] for p, i in report["pollutants"].items()}
