@@ -1,52 +1,63 @@
-# EcoPulse AI - Urban Climate Intelligence & Decision Engine
+# 🌍 EcoPulse AI
 
-Containerized infrastructure + TimescaleDB/Pgvector schema.
+**Autonomous Urban Climate Intelligence & Decision Engine**: a full-stack platform that ingests air-quality data, forecasts pollution 24-72 hours ahead, analyses satellite imagery with a CNN, runs a multi-agent LangGraph pipeline for health risk and policy recommendations, and answers questions through a RAG-powered streaming chatbot.
 
-## Run
-```bash
-cp .env.example .env     # set POSTGRES_PASSWORD and SECRET_KEY
-docker compose up --build
+## 👤 About the Builder
+**NIKHIL CHARY SRIRAMOJU**, B.Tech Final Year, Computer Science & Engineering
+
+- 🔗 LinkedIn: [nikhil-chary-sriramoju](https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a)
+- 💻 GitHub: [Nikhil-creat](https://github.com/Nikhil-creat)
+- 📧 Email: sriramojunikhil66@gmail.com
+
+## ✨ Features
+- **Multi-pollutant forecasting**: PM2.5, PM10, NO₂, AQI and temperature at +6/12/24/48/72 h. Holt-Winters, damped-trend and seasonal-naive models are compared on a 24 h hold-out; the best is used. Retrained every 3 hours and when drift is detected.
+- **CNN spatial analysis**: ResNet-style PyTorch network producing a Smog Severity Index and Green Canopy Density, rendered as a 3D heatmap (heuristic scoring until trained on labelled imagery).
+- **Agentic AI (LangGraph)**: Data Integrity Agent → Forecast & Health Risk Agent → Policy & Mitigation Agent. Works deterministically without an LLM; Groq / Gemini add narrative text.
+- **Hybrid RAG chatbot**: pgvector + full-text search fused with reciprocal-rank fusion over WHO / CPCB guidelines, combined with live sensor and forecast context, streamed over SSE with session memory.
+- **MLOps drift monitor**: KS-test and Wasserstein distance against a reference window, triggering retraining.
+- **Live dashboard**: Next.js, Tailwind, Recharts, deck.gl 3D map, WebSocket live metrics, one-click Executive Health & Policy Report (PDF).
+- **Security basics**: API-key protection on write/admin endpoints, per-IP rate limits.
+
+## 🏗️ Architecture
 ```
-- App: http://localhost
-- API docs: http://localhost/docs
-- Readiness: http://localhost/api/v1/health/ready (shows timescaledb + vector extensions)
+Browser ─▶ Nginx ─┬─▶ Next.js dashboard
+                  ├─▶ FastAPI ──▶ TimescaleDB + pgvector
+                  │      │ ▲            ▲
+                  │      ▼ │            │
+                  │    Redis ◀──▶ Celery worker + beat
+                  │                (ingest · CNN · forecasts · drift)
+                  └─▶ WebSocket /ws/live-metrics, SSE /api/v1/chat
+```
 
-## Notes
-- Schema is created once from `infra/db/init/*.sql`. To re-run after changes:
-  `docker compose down -v` (wipes data) then `up --build`.
-- ORM models in `backend/app/models` mirror the SQL schema.
-- Phase 2 adds ingestion, CNN module, drift monitor.
+## 🧰 Tech Stack
+FastAPI · Python 3.11 · SQLAlchemy 2 · TimescaleDB · pgvector · Celery · Redis · PyTorch · statsmodels · LangChain / LangGraph · Groq · Gemini · sentence-transformers (all-MiniLM-L6-v2) · Next.js 14 · Tailwind · Recharts · deck.gl · ReportLab · Docker Compose · Nginx · GitHub Actions
 
-## Phase 2 - ingestion, CNN, drift
-- `POST /api/v1/ingest/readings` - validated batch upsert; `POST /api/v1/ingest/fetch` - poll providers now
-- Celery beat: fetch every 15 min (OpenWeatherMap / CPCB; **simulated data if no keys set**), drift check hourly
-- `POST /api/v1/satellite/analyze` (multipart: file, region, image_type) -> queued CNN job; `GET /api/v1/satellite/latest`
-- `GET /api/v1/mlops/drift`, `POST /api/v1/mlops/drift/run`
-- CNN runs heuristic scoring until weights exist: `docker compose exec celery-worker python -m app.ml.train_spatial_cnn --images <dir>`
-- Set `STATIONS_JSON` in `.env` with exact coordinates for your stations.
+## 🚀 Getting Started
+Requires Docker + Docker Compose (a Linux VM or GitHub Codespaces works).
 
-## Phase 3 - RAG + agents
-1. `POST /api/v1/knowledge/seed` (first run downloads the MiniLM model) - loads WHO/CPCB/advisory/playbook docs
-2. `GET /api/v1/knowledge/search?q=asthma outdoor exercise` - hybrid (vector + full-text, RRF) retrieval
-3. `POST /api/v1/agents/run {"city":"Warangal"}` - Integrity -> Risk -> Policy graph
-- Works without LLM keys (deterministic + templated text); with `GROQ_API_KEY` / `GEMINI_API_KEY` the narratives are LLM-written.
-- Until forecasters are trained, forecasts come from a labelled `baseline-damped-trend` fallback.
-- Add official PDFs: `POST /api/v1/knowledge/upload` (file, source, doc_type).
+1. Clone this repo.
+2. `cp .env.example .env` and set `POSTGRES_PASSWORD`, `SECRET_KEY`, `API_KEYS` (optional: `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENWEATHER_API_KEY`, `CPCB_API_KEY`, `STATIONS_JSON`).
+3. `make up`
+4. `./scripts/bootstrap.sh http://localhost YOUR_API_KEY` (seeds the knowledge base, backfills simulated history, trains forecasts)
+5. Open `http://localhost` (dashboard) and `http://localhost/docs` (API).
 
-## Phase 4 - REST, WebSocket, SSE chat, PDF
-- `GET /api/v1/stats/summary?city=`, `/stats/timeseries?station_id=&field=pm25&hours=48`, `/forecasts?station_id=`
-- `GET /api/v1/reports/executive?city=Warangal` -> PDF (runs the agent pipeline)
-- `ws://localhost/ws/live-metrics?city=Warangal` -> snapshot, then pushes on every ingest (Redis pub/sub)
-- `POST /api/v1/chat {"message": "...", "city": "...", "session_id": "..."}` -> SSE (`meta`, `token`, `done`)
-  - `curl -N -X POST localhost/api/v1/chat -H 'content-type: application/json' -d '{"message":"Safe to exercise outside? I have asthma","city":"Warangal"}'`
-- No authentication yet (added before any public deployment).
+See [`docs/DEPLOY.md`](docs/DEPLOY.md) for the deployment checklist.
 
-## Phase 5 - Dashboard (http://localhost)
-- Live AQI gauge + pollutant cards (WebSocket), 48h history + forecast chart, 3D deck.gl map (station columns + CNN grid), floating streaming chat drawer, one-click PDF report.
-- Quick start: `POST /api/v1/ingest/fetch` -> open http://localhost -> `POST /api/v1/knowledge/seed` for chat/report citations.
-- Map has no basemap tiles (works offline); CNN grid is centred on the stations because uploads carry no georeference.
+## 🔌 Key Endpoints
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/stats/summary` | Latest readings and mean AQI |
+| `GET /api/v1/forecasts` | Station forecast |
+| `POST /api/v1/agents/run` | Run the 3-agent pipeline |
+| `POST /api/v1/chat` | Streaming RAG chat (SSE) |
+| `GET /api/v1/reports/executive` | Executive PDF report |
+| `POST /api/v1/satellite/analyze` | Queue CNN analysis of an image |
+| `GET /api/v1/mlops/drift` | Latest drift report |
+| `WS /ws/live-metrics` | Live readings |
 
-## Hardening & ops (final pass)
-- Real forecaster: Holt-Winters / damped-trend / seasonal-naive chosen on a 24 h hold-out, retrained every 3 h and on drift
-- API-key auth on ingest/knowledge/drift-run (`X-API-Key`), per-IP rate limits on chat, reports, agents, satellite upload
-- `make bootstrap`, `make test`, CI workflow, `docs/DEPLOY.md`
+## ⚠️ Honest Limitations
+- Without API keys the platform uses clearly tagged **simulated** data.
+- The CNN uses heuristic scoring until trained on real labelled imagery.
+- Seed WHO/CPCB documents are summaries; upload the official PDFs for production use.
+- Decision-support only: not medical advice; policy actions need official approval.
+- No user accounts yet; dashboard reads are public.
