@@ -10,6 +10,7 @@ from app.core.config import Settings
 from app.models import AuditLog, SensorReading
 from app.schemas.sensor import IngestResult, SensorReadingIn
 from app.services.aqi import compute_aqi
+from app.services.alerts import evaluate_alerts
 from app.services.live import publish_readings
 from app.services.providers import build_providers
 
@@ -51,6 +52,10 @@ async def store_readings(session: AsyncSession, readings: list[SensorReadingIn])
                          entity_type="sensor_readings",
                          details={"count": len(rows), "suspect": flags.count(1), "failed": flags.count(2)}))
     await session.commit()
+    try:
+        await evaluate_alerts(session, rows)
+    except Exception as exc:  # noqa: BLE001 - alerting must never break ingestion
+        log.warning("alert evaluation failed: %r", exc)
     await publish_readings(rows)  # best-effort push to WebSocket clients
     return IngestResult(received=len(readings), stored=len(rows), suspect=flags.count(1), failed=flags.count(2))
 

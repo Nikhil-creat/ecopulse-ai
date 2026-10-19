@@ -14,8 +14,28 @@ settings = get_settings()
 logging.basicConfig(level=settings.log_level)
 
 
+async def bootstrap_admin() -> None:
+    """Create the first admin from ADMIN_EMAIL / ADMIN_PASSWORD when no users exist."""
+    from sqlalchemy import select
+
+    from app.core.auth import hash_password
+    from app.db.session import SessionLocal
+    from app.models import User
+
+    if not (settings.admin_email and settings.admin_password):
+        return
+    try:
+        async with SessionLocal() as s:
+            if (await s.execute(select(User.id).limit(1))).first() is None:
+                s.add(User(email=settings.admin_email.lower(), password_hash=hash_password(settings.admin_password), role="admin"))
+                await s.commit()
+    except Exception as exc:  # noqa: BLE001 - e.g. users table not migrated yet (run make migrate)
+        logging.getLogger(__name__).warning("admin bootstrap skipped: %r", exc)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    await bootstrap_admin()
     yield
     await engine.dispose()
 

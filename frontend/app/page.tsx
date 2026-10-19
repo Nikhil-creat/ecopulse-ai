@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import AqiGauge from "@/components/AqiGauge";
+import AlertsPanel from "@/components/AlertsPanel";
+import AuthBar from "@/components/AuthBar";
 import ChatDrawer from "@/components/ChatDrawer";
 import PollutantGrid from "@/components/PollutantGrid";
 import ReportButton from "@/components/ReportButton";
@@ -55,6 +57,7 @@ export default function Dashboard() {
             <span className={`h-2.5 w-2.5 rounded-full ${STATUS_STYLE[status]}`} />
             {status}{asOf ? ` · ${asOf.toLocaleTimeString()}` : ""}
           </span>
+          <AuthBar />
           {city && <ReportButton city={city} />}
         </div>
       </header>
@@ -90,6 +93,7 @@ export default function Dashboard() {
             <TrendChart stationId={selected?.station_id ?? null} />
             <SpatialMap city={city} readings={list} onSelect={setStation} />
           </section>
+          <AlertsPanel city={city} />
         </>
       )}
       <ChatDrawer city={city} />

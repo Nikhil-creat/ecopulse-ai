@@ -12,13 +12,20 @@ log = logging.getLogger(__name__)
 _redis: Redis | None = None
 
 
-async def require_api_key(x_api_key: str | None = Header(None)) -> None:
-    """Protects write/admin endpoints. If API_KEYS is empty, auth is disabled (development only)."""
-    keys = get_settings().api_key_list
-    if not keys:
+async def require_api_key(request: Request, x_api_key: str | None = Header(None)) -> None:
+    """Protects write/admin endpoints: valid API key (machines) OR logged-in analyst/admin (people).
+    Open only when no API keys are configured and AUTH_REQUIRED is false (development)."""
+    from app.core.auth import ROLES, claims_from_request
+
+    cfg = get_settings()
+    if not cfg.api_key_list and not cfg.auth_required:
         return
-    if not x_api_key or not any(hmac.compare_digest(x_api_key, k) for k in keys):
-        raise HTTPException(401, "invalid or missing X-API-Key")
+    if x_api_key and any(hmac.compare_digest(x_api_key, k) for k in cfg.api_key_list):
+        return
+    claims = claims_from_request(request)
+    if claims and ROLES.get(claims.get("role", ""), -1) >= ROLES["analyst"]:
+        return
+    raise HTTPException(401, "authentication required (X-API-Key or analyst/admin login)")
 
 
 def rate_limit(name: str, limit: int, window: int = 60) -> Callable[[Request], Awaitable[None]]:

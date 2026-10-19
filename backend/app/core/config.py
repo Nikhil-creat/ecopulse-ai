@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     cpcb_api_key: str = ""
 
     api_keys: str = ""  # comma-separated; empty = auth disabled (dev only)
+    auth_required: bool = False  # True: reject anonymous access to protected endpoints
+    admin_email: str = ""
+    admin_password: str = ""
+    jwt_ttl_hours: int = 8
     stations_json: str = ""
     artifacts_dir: str = "/app/artifacts"
     ingest_interval_seconds: int = 900

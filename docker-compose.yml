@@ -19,6 +19,9 @@ x-backend-env: &backend-env
   CPCB_API_KEY: ${CPCB_API_KEY:-}
   STATIONS_JSON: ${STATIONS_JSON:-}
   API_KEYS: ${API_KEYS:-}
+  AUTH_REQUIRED: ${AUTH_REQUIRED:-false}
+  ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+  ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
   ARTIFACTS_DIR: /app/artifacts
 
 services:
