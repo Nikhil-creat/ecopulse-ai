@@ -1,0 +1,73 @@
+imageTag: latest
+images:
+  backend: ghcr.io/nikhil-creat/ecopulse-ai/backend
+  frontend: ghcr.io/nikhil-creat/ecopulse-ai/frontend
+
+# Postgres (TimescaleDB + pgvector) and Redis are expected to exist (managed services or their own charts).
+config:               # non-secret environment for backend components
+  APP_ENV: production
+  AUTH_REQUIRED: "true"
+  POSTGRES_HOST: timescaledb.example.svc
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ecopulse
+  POSTGRES_USER: ecopulse
+  REDIS_URL: redis://redis.example.svc:6379/0
+  CORS_ORIGINS: https://ecopulse.example.com
+  ARTIFACTS_DIR: /app/artifacts
+secrets:              # DEMO ONLY: in production use an external secret manager / pre-created Secret
+  POSTGRES_PASSWORD: change-me
+  SECRET_KEY: change-me-long-random
+  API_KEYS: change-me
+  ADMIN_EMAIL: ""
+  ADMIN_PASSWORD: ""
+  GROQ_API_KEY: ""
+  GEMINI_API_KEY: ""
+existingSecret: ""    # if set, this Secret is used instead of the one rendered above
+
+# api and worker share /app/artifacts (drift/backtest reports, uploaded images): needs a ReadWriteMany claim.
+artifacts:
+  existingClaim: ""   # empty = emptyDir (single-node dev only)
+
+ingress:
+  enabled: true
+  className: nginx
+  host: ecopulse.example.com
+  tlsSecret: ""
+
+components:
+  api:
+    enabled: true
+    image: backend
+    backendEnv: true
+    replicas: 2
+    port: 8000
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+    liveness: /api/v1/health/live
+    readiness: /api/v1/health/ready
+    resources: { requests: { cpu: 250m, memory: 512Mi }, limits: { memory: 2Gi } }
+  worker:        # scale freely: no scheduler inside
+    enabled: true
+    image: backend
+    backendEnv: true
+    replicas: 2
+    command: ["celery", "-A", "app.workers.celery_app.celery", "worker", "--loglevel=INFO", "--concurrency=2"]
+    resources: { requests: { cpu: 500m, memory: 1Gi }, limits: { memory: 4Gi } }
+  beat:          # exactly ONE scheduler, otherwise every periodic task runs N times
+    enabled: true
+    image: backend
+    backendEnv: true
+    replicas: 1
+    command: ["celery", "-A", "app.workers.celery_app.celery", "beat", "--loglevel=INFO"]
+    resources: { requests: { cpu: 50m, memory: 256Mi }, limits: { memory: 512Mi } }
+  frontend:
+    enabled: true
+    image: frontend
+    backendEnv: false
+    replicas: 2
+    port: 3000
+    liveness: /
+    readiness: /
+    resources: { requests: { cpu: 100m, memory: 256Mi }, limits: { memory: 768Mi } }
+
+autoscaling:
+  api: { enabled: true, minReplicas: 2, maxReplicas: 8, cpuTarget: 70 }

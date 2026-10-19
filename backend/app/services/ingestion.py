@@ -33,6 +33,7 @@ def assess_quality(r: SensorReadingIn) -> int:
 
 
 async def store_readings(session: AsyncSession, readings: list[SensorReadingIn]) -> IngestResult:
+    readings = list({(r.station_id, r.time): r for r in readings}.values())  # one row per key per statement
     rows, flags = [], []
     for r in readings:
         flag = assess_quality(r)

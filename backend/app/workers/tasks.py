@@ -29,6 +29,10 @@ def fetch_sensor_data() -> dict[str, Any]:
         readings = await fetch_live(get_settings())
         if not readings:
             return {"received": 0, "stored": 0, "suspect": 0, "failed": 0}
+        if get_settings().kafka_brokers:
+            from app.streaming.producer import publish
+
+            return {"queued": await publish(get_settings().kafka_brokers, readings)}
         async with worker_session() as session:
             return (await store_readings(session, readings)).model_dump()
 

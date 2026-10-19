@@ -1,0 +1,44 @@
+{{- $full := include "ecopulse.fullname" . -}}
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $full }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"        # SSE chat streaming
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"    # WebSocket live metrics
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tlsSecret }}
+  tls:
+    - hosts: [{{ .Values.ingress.host }}]
+      secretName: {{ .Values.ingress.tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          {{- range $p := list "/api" "/ws" "/docs" "/redoc" "/openapi.json" }}
+          - path: {{ $p }}
+            pathType: Prefix
+            backend: { service: { name: {{ $full }}-api, port: { number: 8000 } } }
+          {{- end }}
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: {{ $full }}-frontend, port: { number: 3000 } } }
+{{- end }}
+{{- if .Values.autoscaling.api.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $full }}-api
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: {{ $full }}-api }
+  minReplicas: {{ .Values.autoscaling.api.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.api.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: {{ .Values.autoscaling.api.cpuTarget }} } }
+{{- end }}

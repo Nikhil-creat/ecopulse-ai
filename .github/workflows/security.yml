@@ -1,0 +1,33 @@
+name: security
+on:
+  push:
+  pull_request:
+  schedule: [{ cron: "0 3 * * 1" }]
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+  fs-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy dependency + IaC scan (report-only)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scanners: vuln,misconfig
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "0"
+          format: sarif
+          output: trivy-fs.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with: { sarif_file: trivy-fs.sarif, category: trivy-fs }

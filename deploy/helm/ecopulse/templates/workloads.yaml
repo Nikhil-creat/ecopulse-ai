@@ -1,0 +1,74 @@
+{{- $full := include "ecopulse.fullname" . -}}
+{{- range $name, $c := .Values.components }}
+{{- if $c.enabled }}
+{{- $sel := include "ecopulse.selector" (dict "root" $ "name" $name) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $full }}-{{ $name }}
+spec:
+  replicas: {{ $c.replicas }}
+  selector:
+    matchLabels:
+      {{- $sel | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- $sel | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: "{{ index $.Values.images $c.image }}:{{ $.Values.imageTag }}"
+          {{- with $c.command }}
+          command: {{ toJson . }}
+          {{- end }}
+          {{- if $c.backendEnv }}
+          envFrom:
+            - configMapRef:
+                name: {{ $full }}-config
+            - secretRef:
+                name: {{ default (printf "%s-secrets" $full) $.Values.existingSecret }}
+          volumeMounts:
+            - name: artifacts
+              mountPath: /app/artifacts
+          {{- end }}
+          {{- if $c.port }}
+          ports:
+            - containerPort: {{ $c.port }}
+          livenessProbe:
+            httpGet: { path: {{ $c.liveness }}, port: {{ $c.port }} }
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: {{ $c.readiness }}, port: {{ $c.port }} }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          resources:
+            {{- toYaml $c.resources | nindent 12 }}
+      {{- if $c.backendEnv }}
+      volumes:
+        - name: artifacts
+          {{- if $.Values.artifacts.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ $.Values.artifacts.existingClaim }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- end }}
+{{- if $c.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $full }}-{{ $name }}
+spec:
+  selector:
+    {{- $sel | nindent 4 }}
+  ports:
+    - port: {{ $c.port }}
+      targetPort: {{ $c.port }}
+{{- end }}
+{{- end }}
+{{- end }}

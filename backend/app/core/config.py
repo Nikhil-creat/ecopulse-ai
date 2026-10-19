@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     admin_email: str = ""
     admin_password: str = ""
     jwt_ttl_hours: int = 8
+    kafka_brokers: str = ""  # e.g. redpanda:9092 ; empty = poll-and-store directly
     stations_json: str = ""
     artifacts_dir: str = "/app/artifacts"
     ingest_interval_seconds: int = 900

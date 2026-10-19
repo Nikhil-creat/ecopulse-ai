@@ -23,6 +23,7 @@ x-backend-env: &backend-env
   ADMIN_EMAIL: ${ADMIN_EMAIL:-}
   ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
   MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
+  KAFKA_BROKERS: ${KAFKA_BROKERS:-}
   MLFLOW_HTTP_REQUEST_MAX_RETRIES: "1"
   MLFLOW_HTTP_REQUEST_TIMEOUT: "5"
   ARTIFACTS_DIR: /app/artifacts
@@ -201,6 +202,37 @@ services:
     volumes:
       - mlflow-data:/mlflow
     networks: [data-net, app-net]
+
+  redpanda:   # Kafka-compatible broker. Start: make streaming (then set KAFKA_BROKERS=redpanda:9092 in .env)
+    image: redpandadata/redpanda:v24.2.7
+    profiles: ["streaming"]
+    restart: unless-stopped
+    command: >
+      redpanda start --overprovisioned --smp 1 --memory 512M --reserve-memory 0M --node-id 0 --check=false
+      --kafka-addr internal://0.0.0.0:9092 --advertise-kafka-addr internal://redpanda:9092
+      --set redpanda.auto_create_topics_enabled=true
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster info || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [data-net]
+
+  stream-consumer:
+    build:
+      context: ./backend
+    profiles: ["streaming"]
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+      KAFKA_BROKERS: redpanda:9092
+    command: ["python", "-m", "app.streaming.consumer"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      postgres-timescaledb-vector:
+        condition: service_healthy
+    networks: [data-net]
 
 networks:
   data-net:

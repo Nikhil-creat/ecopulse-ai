@@ -23,6 +23,7 @@
 - **MCP server**: exposes air quality, forecasts, risk assessment and guideline search as tools to any Model Context Protocol client (`make mcp`).
 - **Accounts & alerts (v3)**: JWT sessions in httpOnly cookies, scrypt password hashing, viewer / analyst / admin roles, login rate limiting, audit logging, and per-user threshold alerts that fire on fresh data.
 - **Model intelligence (v4)**: rolling-origin forecast back-testing with skill vs persistence, decomposition-based explanations of each forecast, Isolation Forest anomaly detection with per-hour driver feature, and optional MLflow experiment tracking (`make mlflow`).
+- **Scale & delivery (v5)**: Kafka-compatible streaming ingestion (Redpanda) with dead-letter topic and idempotent at-least-once consumers, a Helm chart (HPA, single-replica scheduler, ingress tuned for SSE/WebSocket), k6 load tests, and CI that builds/pushes images to GHCR, scans them with Trivy, scans for leaked secrets, and keeps dependencies fresh via Dependabot.
 - **Security basics**: API-key protection on write/admin endpoints, per-IP rate limits.
 
 ## 🏗️ Architecture
@@ -73,4 +74,6 @@ See [`docs/DEPLOY.md`](docs/DEPLOY.md) for the deployment checklist.
 - No user accounts yet; dashboard reads are public.
 
 ## Roadmap
-- **v5 Scale**: Redpanda/Kafka streaming ingestion, Kubernetes (Helm) manifests, k6 load tests, container scanning in CI.
+- Non-root container images, mTLS between services, per-station API tokens
+- Model registry for the trained CNN, GraphRAG over policy documents
+- Kubernetes: managed TimescaleDB/Redis operators, Terraform for the cluster

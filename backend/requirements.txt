@@ -28,3 +28,4 @@ pyjwt>=2.8
 email-validator>=2.1
 scikit-learn>=1.5
 mlflow-skinny>=2.17
+aiokafka>=0.11
